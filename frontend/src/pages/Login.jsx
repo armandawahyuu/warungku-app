@@ -33,7 +33,7 @@ const Login = () => {
                     <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Store className="w-10 h-10 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">WarungKu</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Warung H12</h1>
                     <p className="text-gray-500">Silakan login untuk melanjutkan</p>
                 </div>
 
@@ -90,6 +90,7 @@ const Login = () => {
 
                 <div className="mt-6 text-center text-xs text-gray-400">
                     <p>Default: admin / admin123</p>
+                    <p className="mt-4">© 2025 Armanda Wahyu</p>
                 </div>
             </div>
         </div>

@@ -76,7 +76,7 @@ const Dashboard = () => {
                     <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Store className="w-10 h-10 text-blue-600" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">WarungKu Financial</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Warung H12 Financial</h1>
                     <p className="text-gray-500 mb-8">Warung belum dibuka hari ini. Silahkan buka sesi baru untuk mulai mencatat.</p>
                     <Link
                         to="/open-session"
@@ -137,7 +137,7 @@ const Dashboard = () => {
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                             <Store className="w-6 h-6 text-blue-600" />
-                            WarungKu
+                            Warung H12
                         </h1>
                         <p className="text-xs text-gray-500 mt-1">Sesi: {new Date(session.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     </div>

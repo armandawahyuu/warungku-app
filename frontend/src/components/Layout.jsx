@@ -50,7 +50,7 @@ const Layout = ({ children }) => {
                     >
                         <Menu className="w-6 h-6 text-gray-600" />
                     </button>
-                    <span className="font-bold text-lg text-gray-900">WarungKu</span>
+                    <span className="font-bold text-lg text-gray-900">Warung H12</span>
                 </div>
 
                 {/* Main Content */}
