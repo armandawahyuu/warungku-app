@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Store } from 'lucide-react';
@@ -6,27 +6,76 @@ import CurrencyInput from '../components/CurrencyInput';
 
 const OpenSession = () => {
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        opening_balance_laci1: '',
-        opening_balance_laci2: '',
-        opening_balance_brilink: '',
-        opening_balance_dana: '',
-        opening_balance_digipos: '',
-    });
+    const [wallets, setWallets] = useState([]);
+    const [formData, setFormData] = useState({});
+    const [loading, setLoading] = useState(true);
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [walletsRes, lastSessionRes] = await Promise.all([
+                    api.get('/wallets'),
+                    api.get('/sessions/last-closed')
+                ]);
+
+                setWallets(walletsRes.data);
+
+                const lastSession = lastSessionRes.data;
+                const initialData = {};
+
+                // Initialize form data
+                walletsRes.data.forEach(w => {
+                    initialData[w.id] = '';
+                });
+
+                // Pre-fill from last session if available
+                if (lastSession && lastSession.SessionBalances) {
+                    lastSession.SessionBalances.forEach(b => {
+                        const wallet = walletsRes.data.find(w => w.id === b.wallet_id);
+                        if (wallet) {
+                            if (wallet.type === 'DIGITAL') {
+                                initialData[wallet.id] = b.closing_balance;
+                            } else {
+                                initialData[wallet.id] = b.actual_balance;
+                            }
+                        }
+                    });
+                }
+
+                setFormData(initialData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const handleChange = (id, value) => {
+        setFormData(prev => ({ ...prev, [id]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/sessions/open', formData);
+            const balances = Object.entries(formData).map(([walletId, balance]) => ({
+                wallet_id: walletId,
+                opening_balance: balance || 0
+            }));
+
+            await api.post('/sessions/open', { balances });
             navigate('/');
         } catch (error) {
             alert('Gagal membuka warung: ' + error.message);
         }
     };
+
+    if (loading) return <div className="p-8 text-center">Loading...</div>;
+
+    const physicalWallets = wallets.filter(w => w.type === 'PHYSICAL');
+    const digitalWallets = wallets.filter(w => w.type === 'DIGITAL');
 
     return (
         <div className="min-h-screen bg-gray-50 p-4">
@@ -43,60 +92,49 @@ const OpenSession = () => {
 
                 <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-sm space-y-8">
 
-                    <section>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
-                            Saldo Fisik (Cash)
-                        </h2>
-                        <div className="space-y-4">
-                            <InputGroup
-                                label="Laci 1 (Khusus Brilink)"
-                                name="opening_balance_laci1"
-                                value={formData.opening_balance_laci1}
-                                onChange={handleChange}
-                                placeholder="0"
-                            />
-                            <InputGroup
-                                label="Laci 2 (Warung)"
-                                name="opening_balance_laci2"
-                                value={formData.opening_balance_laci2}
-                                onChange={handleChange}
-                                placeholder="0"
-                            />
-                        </div>
-                    </section>
+                    {physicalWallets.length > 0 && (
+                        <section>
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                                Saldo Fisik (Cash)
+                            </h2>
+                            <div className="space-y-4">
+                                {physicalWallets.map(w => (
+                                    <InputGroup
+                                        key={w.id}
+                                        label={w.name}
+                                        value={formData[w.id]}
+                                        onChange={(e) => handleChange(w.id, e.target.value)}
+                                        placeholder="0"
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
-                    <div className="border-t border-gray-100"></div>
+                    {physicalWallets.length > 0 && digitalWallets.length > 0 && (
+                        <div className="border-t border-gray-100"></div>
+                    )}
 
-                    <section>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <div className="w-1 h-6 bg-purple-500 rounded-full"></div>
-                            Saldo Digital
-                        </h2>
-                        <div className="space-y-4">
-                            <InputGroup
-                                label="Saldo Brilink (Bank)"
-                                name="opening_balance_brilink"
-                                value={formData.opening_balance_brilink}
-                                onChange={handleChange}
-                                placeholder="0"
-                            />
-                            <InputGroup
-                                label="Saldo Dana"
-                                name="opening_balance_dana"
-                                value={formData.opening_balance_dana}
-                                onChange={handleChange}
-                                placeholder="0"
-                            />
-                            <InputGroup
-                                label="Saldo Digipos"
-                                name="opening_balance_digipos"
-                                value={formData.opening_balance_digipos}
-                                onChange={handleChange}
-                                placeholder="0"
-                            />
-                        </div>
-                    </section>
+                    {digitalWallets.length > 0 && (
+                        <section>
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <div className="w-1 h-6 bg-purple-500 rounded-full"></div>
+                                Saldo Digital
+                            </h2>
+                            <div className="space-y-4">
+                                {digitalWallets.map(w => (
+                                    <InputGroup
+                                        key={w.id}
+                                        label={w.name}
+                                        value={formData[w.id]}
+                                        onChange={(e) => handleChange(w.id, e.target.value)}
+                                        placeholder="0"
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     <button
                         type="submit"
@@ -111,13 +149,12 @@ const OpenSession = () => {
     );
 };
 
-const InputGroup = ({ label, name, value, onChange, placeholder }) => (
+const InputGroup = ({ label, value, onChange, placeholder }) => (
     <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">{label}</label>
         <div className="relative">
             <span className="absolute left-4 top-3.5 text-gray-400 font-medium">Rp</span>
             <CurrencyInput
-                name={name}
                 value={value}
                 onChange={onChange}
                 className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition font-medium"

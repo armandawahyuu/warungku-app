@@ -1,62 +1,129 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Calculator } from 'lucide-react';
 import CurrencyInput from '../components/CurrencyInput';
+import { useAuth } from '../hooks/useAuth';
 
 const CloseSession = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { logout } = useAuth();
     const [step, setStep] = useState(1);
+    const [wallets, setWallets] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [currentSessionId, setCurrentSessionId] = useState(id);
 
-    const [formData, setFormData] = useState({
-        closing_balance_brilink: '',
-        closing_balance_dana: '',
-        closing_balance_digipos: '',
-        actual_cash_laci1: 0,
-        actual_cash_laci2: 0,
-        notes: ''
-    });
+    const [formData, setFormData] = useState({});
+    const [cashCount, setCashCount] = useState({});
 
-    const [cashCount, setCashCount] = useState({
-        laci1: { c100k: 0, c50k: 0, c20k: 0, c10k: 0 },
-        laci2: { c100k: 0, c50k: 0, c20k: 0, c10k: 0 },
-    });
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                let sessionId = id;
+
+                // If no ID in params, fetch current session
+                if (!sessionId) {
+                    const sessionRes = await api.get('/sessions/current');
+                    if (!sessionRes.data) {
+                        alert('Tidak ada sesi aktif. Anda akan diarahkan ke Dashboard.');
+                        navigate('/');
+                        return;
+                    }
+                    sessionId = sessionRes.data.id;
+                }
+
+                setCurrentSessionId(sessionId);
+
+                const res = await api.get('/wallets');
+                setWallets(res.data);
+
+                const initialData = {};
+                const initialCashCount = {};
+
+                res.data.forEach(w => {
+                    if (w.type === 'DIGITAL') {
+                        initialData[w.id] = ''; // Closing balance
+                    } else {
+                        initialData[w.id] = 0; // Actual cash total
+                        initialCashCount[w.id] = { c100k: 0, c50k: 0, c20k: 0, c10k: 0 };
+                    }
+                });
+
+                setFormData(initialData);
+                setCashCount(initialCashCount);
+
+                // Store sessionId for submission if it wasn't in params
+                if (!id) {
+                    // We can't easily update params, so we'll use a state or just rely on the variable if we were refactoring more.
+                    // But wait, handleSubmit uses `id` from useParams. We need to fix that too.
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                navigate('/');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [id, navigate]);
 
     const calculateTotal = (counts) => {
         return (counts.c100k * 100000) + (counts.c50k * 50000) + (counts.c20k * 20000) + (counts.c10k * 10000);
     };
 
-    const handleCashChange = (drawer, denom, value) => {
-        // value from CurrencyInput is a string with digits, or empty string.
-        // We need to parse it to integer.
+    const handleCashChange = (walletId, denom, value) => {
         const intValue = value === '' ? 0 : parseInt(value, 10);
-
-        const newCounts = { ...cashCount, [drawer]: { ...cashCount[drawer], [denom]: intValue } };
+        const newCounts = { ...cashCount, [walletId]: { ...cashCount[walletId], [denom]: intValue } };
         setCashCount(newCounts);
 
-        if (drawer === 'laci1') {
-            setFormData(prev => ({ ...prev, actual_cash_laci1: calculateTotal(newCounts.laci1) }));
-        } else {
-            setFormData(prev => ({ ...prev, actual_cash_laci2: calculateTotal(newCounts.laci2) }));
-        }
+        const total = calculateTotal(newCounts[walletId]);
+        setFormData(prev => ({ ...prev, [walletId]: total }));
     };
 
     const handleSubmit = async () => {
+        if (!window.confirm('Apakah anda yakin data sudah benar? \n\nSetelah ini sesi akan ditutup dan anda akan logout otomatis. Pastikan semua uang fisik dan saldo digital sudah sesuai.')) {
+            return;
+        }
+
         try {
+            const balances = wallets.map(w => {
+                const data = { wallet_id: w.id };
+                if (w.type === 'DIGITAL') {
+                    data.closing_balance = formData[w.id] || 0;
+                } else {
+                    data.actual_balance = formData[w.id] || 0;
+                }
+                return data;
+            });
+
+            const cashCountsPayload = [];
+            wallets.filter(w => w.type === 'PHYSICAL').forEach(w => {
+                cashCountsPayload.push({
+                    drawer: w.name,
+                    count_100k: cashCount[w.id].c100k,
+                    count_50k: cashCount[w.id].c50k,
+                    count_20k: cashCount[w.id].c20k,
+                    count_10k: cashCount[w.id].c10k,
+                });
+            });
+
             const payload = {
-                ...formData,
-                cash_counts: [
-                    { drawer: 'LACI1', count_100k: cashCount.laci1.c100k, count_50k: cashCount.laci1.c50k, count_20k: cashCount.laci1.c20k, count_10k: cashCount.laci1.c10k },
-                    { drawer: 'LACI2', count_100k: cashCount.laci2.c100k, count_50k: cashCount.laci2.c50k, count_20k: cashCount.laci2.c20k, count_10k: cashCount.laci2.c10k },
-                ]
+                balances,
+                cash_counts: cashCountsPayload
             };
-            await api.post(`/sessions/${id}/close`, payload);
-            navigate('/');
+
+            await api.post(`/sessions/${currentSessionId}/close`, payload);
+            logout();
         } catch (error) {
             alert('Gagal menutup warung: ' + error.message);
         }
     };
+
+    if (loading) return <div className="p-8 text-center">Loading...</div>;
+
+    const digitalWallets = wallets.filter(w => w.type === 'DIGITAL');
+    const physicalWallets = wallets.filter(w => w.type === 'PHYSICAL');
 
     return (
         <div className="min-h-screen bg-gray-50 p-4">
@@ -89,9 +156,14 @@ const CloseSession = () => {
                         <p className="text-gray-500 mb-6">Masukkan saldo akhir yang tertera di aplikasi masing-masing.</p>
 
                         <div className="space-y-4">
-                            <InputGroup label="Saldo Akhir Brilink" value={formData.closing_balance_brilink} onChange={(e) => setFormData({ ...formData, closing_balance_brilink: e.target.value })} />
-                            <InputGroup label="Saldo Akhir Dana" value={formData.closing_balance_dana} onChange={(e) => setFormData({ ...formData, closing_balance_dana: e.target.value })} />
-                            <InputGroup label="Saldo Akhir Digipos" value={formData.closing_balance_digipos} onChange={(e) => setFormData({ ...formData, closing_balance_digipos: e.target.value })} />
+                            {digitalWallets.map(w => (
+                                <InputGroup
+                                    key={w.id}
+                                    label={`Saldo Akhir ${w.name}`}
+                                    value={formData[w.id]}
+                                    onChange={(e) => setFormData({ ...formData, [w.id]: e.target.value })}
+                                />
+                            ))}
                         </div>
 
                         <button
@@ -114,21 +186,20 @@ const CloseSession = () => {
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-8">
-                                <CashDrawerSection
-                                    title="Laci 1 (Brilink)"
-                                    counts={cashCount.laci1}
-                                    onChange={(d, v) => handleCashChange('laci1', d, v)}
-                                    total={formData.actual_cash_laci1}
-                                    color="blue"
-                                />
-                                <div className="hidden md:block w-px bg-gray-100"></div>
-                                <CashDrawerSection
-                                    title="Laci 2 (Warung)"
-                                    counts={cashCount.laci2}
-                                    onChange={(d, v) => handleCashChange('laci2', d, v)}
-                                    total={formData.actual_cash_laci2}
-                                    color="emerald"
-                                />
+                                {physicalWallets.map((w, index) => (
+                                    <React.Fragment key={w.id}>
+                                        <CashDrawerSection
+                                            title={w.name}
+                                            counts={cashCount[w.id]}
+                                            onChange={(d, v) => handleCashChange(w.id, d, v)}
+                                            total={formData[w.id]}
+                                            color={index % 2 === 0 ? "blue" : "emerald"}
+                                        />
+                                        {index < physicalWallets.length - 1 && (
+                                            <div className="hidden md:block w-px bg-gray-100"></div>
+                                        )}
+                                    </React.Fragment>
+                                ))}
                             </div>
                         </div>
 
@@ -143,7 +214,6 @@ const CloseSession = () => {
                                 onClick={handleSubmit}
                                 className="w-2/3 bg-red-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition shadow-lg hover:shadow-red-200 flex items-center justify-center gap-2"
                             >
-                                <CheckCircle className="w-5 h-5" />
                                 <CheckCircle className="w-5 h-5" />
                                 Tutup Warung & Simpan
                             </button>

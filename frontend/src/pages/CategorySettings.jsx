@@ -7,7 +7,7 @@ const CategorySettings = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newCategory, setNewCategory] = useState('');
-    const [type, setType] = useState('EXPENSE_CATEGORY'); // or INCOME_SOURCE
+    const [type, setType] = useState('EXPENSE'); // or INCOME
 
     useEffect(() => {
         fetchCategories();
@@ -68,14 +68,14 @@ const CategorySettings = () => {
                     {/* Tabs */}
                     <div className="flex border-b border-gray-100">
                         <button
-                            onClick={() => setType('EXPENSE_CATEGORY')}
-                            className={`flex-1 py-4 font-semibold text-sm transition ${type === 'EXPENSE_CATEGORY' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}`}
+                            onClick={() => setType('EXPENSE')}
+                            className={`flex-1 py-4 font-semibold text-sm transition ${type === 'EXPENSE' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}`}
                         >
                             Pengeluaran
                         </button>
                         <button
-                            onClick={() => setType('INCOME_SOURCE')}
-                            className={`flex-1 py-4 font-semibold text-sm transition ${type === 'INCOME_SOURCE' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}`}
+                            onClick={() => setType('INCOME')}
+                            className={`flex-1 py-4 font-semibold text-sm transition ${type === 'INCOME' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}`}
                         >
                             Pemasukan
                         </button>
@@ -89,7 +89,7 @@ const CategorySettings = () => {
                                 value={newCategory}
                                 onChange={(e) => setNewCategory(e.target.value)}
                                 className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                                placeholder={`Tambah kategori ${type === 'EXPENSE_CATEGORY' ? 'pengeluaran' : 'pemasukan'} baru...`}
+                                placeholder={`Tambah kategori ${type === 'EXPENSE' ? 'pengeluaran' : 'pemasukan'} baru...`}
                             />
                             <button
                                 type="submit"

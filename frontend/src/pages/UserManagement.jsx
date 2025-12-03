@@ -7,7 +7,7 @@ import { ArrowLeft, Plus, Trash2, Users, Shield } from 'lucide-react';
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [newUser, setNewUser] = useState({ username: '', password: '' });
+    const [newUser, setNewUser] = useState({ username: '', password: '', role: 'KASIR' });
     const { user } = useAuth();
     const navigate = useNavigate();
 
@@ -38,9 +38,9 @@ const UserManagement = () => {
             await api.post('/auth/register', {
                 username: newUser.username,
                 password: newUser.password,
-                role: 'KASIR'
+                role: newUser.role
             });
-            setNewUser({ username: '', password: '' });
+            setNewUser({ username: '', password: '', role: 'KASIR' });
             fetchUsers();
         } catch (error) {
             alert('Gagal menambah user: ' + (error.response?.data?.message || error.message));
@@ -76,7 +76,7 @@ const UserManagement = () => {
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                             <Plus className="w-5 h-5 text-blue-600" />
-                            Tambah User Kasir
+                            Tambah User Baru
                         </h2>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
@@ -88,7 +88,7 @@ const UserManagement = () => {
                                     value={newUser.username}
                                     onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                                    placeholder="Username kasir"
+                                    placeholder="Username"
                                     required
                                 />
                             </div>
@@ -104,6 +104,19 @@ const UserManagement = () => {
                                     placeholder="Password"
                                     required
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Role
+                                </label>
+                                <select
+                                    value={newUser.role}
+                                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition bg-white"
+                                >
+                                    <option value="KASIR">Kasir</option>
+                                    <option value="ADMIN">Admin</option>
+                                </select>
                             </div>
                             <button
                                 type="submit"

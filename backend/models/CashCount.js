@@ -8,7 +8,7 @@ const CashCount = sequelize.define('CashCount', {
         primaryKey: true,
     },
     drawer: {
-        type: DataTypes.ENUM('LACI1', 'LACI2'),
+        type: DataTypes.STRING,
         allowNull: false,
     },
     count_100k: {

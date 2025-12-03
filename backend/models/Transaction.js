@@ -20,12 +20,12 @@ const Transaction = sequelize.define('Transaction', {
         allowNull: false,
     },
     source_wallet: {
-        type: DataTypes.ENUM('LACI1', 'LACI2', 'BRILINK', 'DANA', 'DIGIPOS', 'BRANKAS', 'BANK'),
+        type: DataTypes.STRING, // Changed from ENUM to STRING for dynamic wallets
         allowNull: true,
     },
     destination_wallet: {
-        type: DataTypes.ENUM('LACI1', 'LACI2', 'BRILINK', 'DANA', 'DIGIPOS', 'BRANKAS', 'BANK'),
-        allowNull: true, // Nullable for expenses
+        type: DataTypes.STRING, // Changed from ENUM to STRING for dynamic wallets
+        allowNull: true,
     },
     description: {
         type: DataTypes.TEXT,

@@ -7,7 +7,9 @@ import {
     LogOut,
     X,
     Store,
-    Users
+    Users,
+    Wallet,
+    History
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -19,6 +21,7 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
         { path: '/', label: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
         { path: '/reports', label: 'Laporan', icon: <FileText className="w-5 h-5" /> },
         { path: '/settings/categories', label: 'Kategori', icon: <Tags className="w-5 h-5" /> },
+        { path: '/settings/wallets', label: 'Dompet', icon: <Wallet className="w-5 h-5" /> },
     ];
 
     // Add User Management for admin only
@@ -28,6 +31,7 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
             label: 'Kelola User',
             icon: <Users className="w-5 h-5" />
         });
+        menuItems.push({ path: '/sessions/history', label: 'Riwayat Sesi', icon: <History className="w-5 h-5" /> });
     }
 
     const isActive = (path) => location.pathname === path;
@@ -87,13 +91,13 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
 
                     {/* Footer / Logout */}
                     <div className="p-4 border-t border-gray-50">
-                        <button
-                            onClick={onLogout}
+                        <Link
+                            to="/close-session"
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition"
                         >
                             <LogOut className="w-5 h-5" />
                             Tutup Warung
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </aside>

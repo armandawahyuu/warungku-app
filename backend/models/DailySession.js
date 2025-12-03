@@ -16,46 +16,6 @@ const DailySession = sequelize.define('DailySession', {
         type: DataTypes.ENUM('OPEN', 'CLOSED'),
         defaultValue: 'OPEN',
     },
-    opening_balance_laci1: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
-    opening_balance_laci2: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
-    opening_balance_brilink: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
-    opening_balance_dana: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
-    opening_balance_digipos: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
-    closing_balance_brilink: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
-    closing_balance_dana: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
-    closing_balance_digipos: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
-    actual_cash_laci1: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
-    actual_cash_laci2: {
-        type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0,
-    },
     notes: {
         type: DataTypes.TEXT,
     },

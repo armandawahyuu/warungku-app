@@ -8,7 +8,7 @@ const MasterData = sequelize.define('MasterData', {
         primaryKey: true,
     },
     type: {
-        type: DataTypes.ENUM('EXPENSE_CATEGORY', 'INCOME_SOURCE'),
+        type: DataTypes.ENUM('INCOME', 'EXPENSE'),
         allowNull: false,
     },
     name: {

@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const sessionController = require('../controllers/sessionController');
 const transactionController = require('../controllers/transactionController');
-
 const masterDataController = require('../controllers/masterDataController');
 const reportController = require('../controllers/reportController');
 const authController = require('../controllers/authController');
+const walletController = require('../controllers/walletController');
 
 // Auth Routes (public)
 router.post('/auth/login', authController.login);
@@ -20,6 +20,9 @@ router.delete('/users/:id', authController.verifyToken, authController.requireAd
 router.post('/sessions/open', authController.verifyToken, sessionController.openSession);
 router.post('/sessions/:id/close', authController.verifyToken, sessionController.closeSession);
 router.get('/sessions/current', authController.verifyToken, sessionController.getCurrentSession);
+router.get('/sessions/last-closed', authController.verifyToken, sessionController.getLastClosedSession);
+router.get('/sessions', authController.verifyToken, authController.requireAdmin, sessionController.getAllSessions);
+router.put('/sessions/:id', authController.verifyToken, authController.requireAdmin, sessionController.updateSession);
 
 // Transaction Routes
 router.post('/transactions', authController.verifyToken, transactionController.addTransaction);
@@ -29,6 +32,11 @@ router.get('/transactions', authController.verifyToken, transactionController.ge
 router.get('/categories', authController.verifyToken, masterDataController.getCategories);
 router.post('/categories', authController.verifyToken, masterDataController.createCategory);
 router.delete('/categories/:id', authController.verifyToken, masterDataController.deleteCategory);
+
+// Wallet Routes
+router.get('/wallets', authController.verifyToken, walletController.getWallets);
+router.post('/wallets', authController.verifyToken, walletController.createWallet);
+router.delete('/wallets/:id', authController.verifyToken, walletController.deleteWallet);
 
 // Report Routes
 router.get('/reports/monthly', authController.verifyToken, reportController.getMonthlyReport);

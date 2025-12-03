@@ -8,6 +8,8 @@ import CategorySettings from './pages/CategorySettings';
 import Reports from './pages/Reports';
 import Login from './pages/Login';
 import UserManagement from './pages/UserManagement';
+import WalletSettings from './pages/WalletSettings';
+import SessionHistory from './pages/SessionHistory';
 
 import Layout from './components/Layout';
 import { AuthProvider } from './context/AuthContext';
@@ -30,11 +32,14 @@ function App() {
               <Layout>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
-                  <Route path="/open" element={<OpenSession />} />
+                  <Route path="/open-session" element={<OpenSession />} />
+                  <Route path="/close-session" element={<CloseSession />} />
                   <Route path="/close/:id" element={<CloseSession />} />
                   <Route path="/transaction/:type" element={<TransactionForm />} />
                   <Route path="/settings/categories" element={<CategorySettings />} />
+                  <Route path="/settings/wallets" element={<WalletSettings />} />
                   <Route path="/settings/users" element={<UserManagement />} />
+                  <Route path="/sessions/history" element={<SessionHistory />} />
                   <Route path="/reports" element={<Reports />} />
                 </Routes>
               </Layout>

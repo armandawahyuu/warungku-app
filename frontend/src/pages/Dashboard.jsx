@@ -11,28 +11,48 @@ import {
     Smartphone
 } from 'lucide-react';
 
+import { useAuth } from '../hooks/useAuth';
+
 const Dashboard = () => {
+    const { user } = useAuth();
     const [session, setSession] = useState(null);
     const [transactions, setTransactions] = useState([]);
+    const [wallets, setWallets] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isClosedView, setIsClosedView] = useState(false);
 
     useEffect(() => {
-        const fetchSession = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/sessions/current');
-                setSession(res.data);
-                if (res.data) {
-                    fetchTransactions(res.data.id);
+                const [sessionRes, walletsRes] = await Promise.all([
+                    api.get('/sessions/current'),
+                    api.get('/wallets')
+                ]);
+
+                if (sessionRes.data) {
+                    setSession(sessionRes.data);
+                    fetchTransactions(sessionRes.data.id);
+                } else if (user?.role === 'ADMIN') {
+                    // If Admin and no open session, fetch last closed session
+                    const lastSessionRes = await api.get('/sessions/last-closed');
+                    if (lastSessionRes.data) {
+                        setSession(lastSessionRes.data);
+                        setIsClosedView(true);
+                        // Optional: fetch transactions for that last session if we want to show history
+                        fetchTransactions(lastSessionRes.data.id);
+                    }
                 }
+
+                setWallets(walletsRes.data);
             } catch (error) {
-                console.error('Error fetching session:', error);
+                console.error('Error fetching data:', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchSession();
-    }, []);
+        fetchData();
+    }, [user]);
 
     const fetchTransactions = async (sessionId) => {
         try {
@@ -49,7 +69,7 @@ const Dashboard = () => {
         </div>
     );
 
-    if (!session) {
+    if (!session && !isClosedView) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
@@ -59,7 +79,7 @@ const Dashboard = () => {
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">WarungKu Financial</h1>
                     <p className="text-gray-500 mb-8">Warung belum dibuka hari ini. Silahkan buka sesi baru untuk mulai mencatat.</p>
                     <Link
-                        to="/open"
+                        to="/open-session"
                         className="block w-full bg-blue-600 text-white px-6 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg hover:shadow-blue-200 transform hover:-translate-y-1"
                     >
                         Buka Warung Sekarang
@@ -69,24 +89,39 @@ const Dashboard = () => {
         );
     }
 
-    const calculateBalance = (wallets) => {
-        if (!session) return 0;
+    const calculateBalance = (walletId) => {
+        if (!session || !session.SessionBalances) return 0;
 
         let total = 0;
-        // Add opening balances
-        wallets.forEach(w => {
-            const key = `opening_balance_${w.toLowerCase()}`;
-            total += Number(session[key] || 0);
-        });
+
+        // Find opening balance for this wallet
+        const balanceRecord = session.SessionBalances.find(b => b.wallet_id === walletId);
+
+        if (isClosedView) {
+            // If closed view, show the final balance (closing or actual)
+            if (balanceRecord) {
+                const wallet = wallets.find(w => w.id === walletId);
+                if (wallet?.type === 'DIGITAL') {
+                    return Number(balanceRecord.closing_balance || 0);
+                } else {
+                    return Number(balanceRecord.actual_balance || 0);
+                }
+            }
+            return 0;
+        }
+
+        if (balanceRecord) {
+            total += Number(balanceRecord.opening_balance || 0);
+        }
 
         // Adjust based on transactions
         transactions.forEach(trx => {
             // Income / Transfer In
-            if (trx.destination_wallet && wallets.includes(trx.destination_wallet)) {
+            if (trx.destination_wallet === walletId) {
                 total += Number(trx.amount);
             }
             // Expense / Transfer Out
-            if (trx.source_wallet && wallets.includes(trx.source_wallet)) {
+            if (trx.source_wallet === walletId) {
                 total -= Number(trx.amount);
             }
         });
@@ -106,9 +141,12 @@ const Dashboard = () => {
                         </h1>
                         <p className="text-xs text-gray-500 mt-1">Sesi: {new Date(session.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        {/* Header actions moved to Sidebar */}
-                    </div>
+                    {isClosedView && (
+                        <div className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <Store className="w-4 h-4" />
+                            Warung Tutup
+                        </div>
+                    )}
                 </div>
             </header>
 
@@ -116,57 +154,64 @@ const Dashboard = () => {
 
                 {/* Saldo Cards */}
                 <section>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Saldo Saat Ini</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <BalanceCard
-                            title="Laci 1 (Brilink)"
-                            amount={calculateBalance(['LACI1'])}
-                            icon={<CreditCard className="w-6 h-6 text-white opacity-80" />}
-                            gradient="bg-gradient-to-br from-blue-500 to-blue-600"
-                        />
-                        <BalanceCard
-                            title="Laci 2 (Warung)"
-                            amount={calculateBalance(['LACI2'])}
-                            icon={<Wallet className="w-6 h-6 text-white opacity-80" />}
-                            gradient="bg-gradient-to-br from-emerald-500 to-emerald-600"
-                        />
-                        <BalanceCard
-                            title="Saldo Digital"
-                            amount={calculateBalance(['BRILINK', 'DANA', 'DIGIPOS'])}
-                            icon={<Smartphone className="w-6 h-6 text-white opacity-80" />}
-                            gradient="bg-gradient-to-br from-purple-500 to-purple-600"
-                            subtitle="Brilink + Dana + Digipos"
-                        />
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Saldo {isClosedView ? 'Terakhir (Tutup Warung)' : 'Saat Ini'}</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {wallets.map((wallet, index) => {
+                            let gradient = 'bg-gradient-to-br from-blue-500 to-blue-600';
+                            let icon = <Wallet className="w-6 h-6 text-white opacity-80" />;
+
+                            if (wallet.type === 'DIGITAL') {
+                                icon = <Smartphone className="w-6 h-6 text-white opacity-80" />;
+                                if (index % 3 === 0) gradient = 'bg-gradient-to-br from-purple-500 to-purple-600';
+                                else if (index % 3 === 1) gradient = 'bg-gradient-to-br from-sky-500 to-sky-600';
+                                else gradient = 'bg-gradient-to-br from-orange-500 to-orange-600';
+                            } else {
+                                if (index % 2 !== 0) gradient = 'bg-gradient-to-br from-emerald-500 to-emerald-600';
+                            }
+
+                            return (
+                                <BalanceCard
+                                    key={wallet.id}
+                                    title={wallet.name}
+                                    amount={calculateBalance(wallet.id)}
+                                    icon={icon}
+                                    gradient={gradient}
+                                    subtitle={wallet.type === 'DIGITAL' ? 'Saldo Digital' : 'Uang Fisik'}
+                                />
+                            );
+                        })}
                     </div>
                 </section>
 
-                {/* Quick Actions */}
-                <section>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Aksi Cepat</h2>
-                    <div className="grid grid-cols-3 gap-4">
-                        <ActionLink
-                            to="/transaction/income"
-                            icon={<PlusCircle className="w-8 h-8 text-emerald-600" />}
-                            label="Pemasukan"
-                            desc="Terima Uang"
-                            color="hover:bg-emerald-50 border-emerald-100"
-                        />
-                        <ActionLink
-                            to="/transaction/expense"
-                            icon={<MinusCircle className="w-8 h-8 text-red-600" />}
-                            label="Pengeluaran"
-                            desc="Bayar Sesuatu"
-                            color="hover:bg-red-50 border-red-100"
-                        />
-                        <ActionLink
-                            to="/transaction/transfer"
-                            icon={<ArrowRightLeft className="w-8 h-8 text-blue-600" />}
-                            label="Transfer"
-                            desc="Pindah Dana"
-                            color="hover:bg-blue-50 border-blue-100"
-                        />
-                    </div>
-                </section>
+                {/* Quick Actions - Hide if closed */}
+                {!isClosedView && (
+                    <section>
+                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Aksi Cepat</h2>
+                        <div className="grid grid-cols-3 gap-4">
+                            <ActionLink
+                                to="/transaction/income"
+                                icon={<PlusCircle className="w-8 h-8 text-emerald-600" />}
+                                label="Pemasukan"
+                                desc="Terima Uang"
+                                color="hover:bg-emerald-50 border-emerald-100"
+                            />
+                            <ActionLink
+                                to="/transaction/expense"
+                                icon={<MinusCircle className="w-8 h-8 text-red-600" />}
+                                label="Pengeluaran"
+                                desc="Bayar Sesuatu"
+                                color="hover:bg-red-50 border-red-100"
+                            />
+                            <ActionLink
+                                to="/transaction/transfer"
+                                icon={<ArrowRightLeft className="w-8 h-8 text-blue-600" />}
+                                label="Transfer"
+                                desc="Pindah Dana"
+                                color="hover:bg-blue-50 border-blue-100"
+                            />
+                        </div>
+                    </section>
+                )}
 
                 {/* Recent Transactions */}
                 <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -184,32 +229,46 @@ const Dashboard = () => {
                         </div>
                     ) : (
                         <div className="divide-y divide-gray-100">
-                            {transactions.map((trx) => (
-                                <div key={trx.id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-full ${trx.type === 'INCOME' ? 'bg-emerald-100 text-emerald-600' :
-                                            trx.type === 'EXPENSE' ? 'bg-red-100 text-red-600' :
-                                                'bg-blue-100 text-blue-600'
+                            {transactions.map((trx) => {
+                                // Helper to find wallet name
+                                const getWalletName = (id) => {
+                                    const w = wallets.find(w => w.id === id);
+                                    return w ? w.name : 'Unknown';
+                                };
+
+                                return (
+                                    <div key={trx.id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-full ${trx.type === 'INCOME' ? 'bg-emerald-100 text-emerald-600' :
+                                                trx.type === 'EXPENSE' ? 'bg-red-100 text-red-600' :
+                                                    'bg-blue-100 text-blue-600'
+                                                }`}>
+                                                {trx.type === 'INCOME' ? <PlusCircle className="w-5 h-5" /> :
+                                                    trx.type === 'EXPENSE' ? <MinusCircle className="w-5 h-5" /> :
+                                                        <ArrowRightLeft className="w-5 h-5" />}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-gray-900">{trx.category}</p>
+                                                <p className="text-xs text-gray-500">
+                                                    {new Date(trx.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • {trx.description || '-'}
+                                                </p>
+                                                {/* Show wallet info if relevant */}
+                                                <p className="text-xs text-gray-400 mt-0.5">
+                                                    {trx.type === 'INCOME' ? `Ke: ${getWalletName(trx.destination_wallet)}` :
+                                                        trx.type === 'EXPENSE' ? `Dari: ${getWalletName(trx.source_wallet)}` :
+                                                            `${getWalletName(trx.source_wallet)} ➔ ${getWalletName(trx.destination_wallet)}`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className={`font-bold ${trx.type === 'INCOME' ? 'text-emerald-600' :
+                                            trx.type === 'EXPENSE' ? 'text-red-600' :
+                                                'text-blue-600'
                                             }`}>
-                                            {trx.type === 'INCOME' ? <PlusCircle className="w-5 h-5" /> :
-                                                trx.type === 'EXPENSE' ? <MinusCircle className="w-5 h-5" /> :
-                                                    <ArrowRightLeft className="w-5 h-5" />}
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-gray-900">{trx.category}</p>
-                                            <p className="text-xs text-gray-500">
-                                                {new Date(trx.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • {trx.description || '-'}
-                                            </p>
+                                            {trx.type === 'INCOME' ? '+' : trx.type === 'EXPENSE' ? '-' : ''} Rp {Number(trx.amount).toLocaleString('id-ID')}
                                         </div>
                                     </div>
-                                    <div className={`font-bold ${trx.type === 'INCOME' ? 'text-emerald-600' :
-                                        trx.type === 'EXPENSE' ? 'text-red-600' :
-                                            'text-blue-600'
-                                        }`}>
-                                        {trx.type === 'INCOME' ? '+' : trx.type === 'EXPENSE' ? '-' : ''} Rp {Number(trx.amount).toLocaleString('id-ID')}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </section>

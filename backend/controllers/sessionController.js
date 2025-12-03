@@ -1,14 +1,9 @@
-const { DailySession, CashCount, Transaction } = require('../models');
+const { DailySession, CashCount, Transaction, SessionBalance, Wallet } = require('../models');
+const { Op } = require('sequelize');
 
 exports.openSession = async (req, res) => {
     try {
-        const {
-            opening_balance_laci1,
-            opening_balance_laci2,
-            opening_balance_brilink,
-            opening_balance_dana,
-            opening_balance_digipos,
-        } = req.body;
+        const { balances } = req.body; // Array of { wallet_id, opening_balance }
 
         // Check if there is already an open session
         const existingSession = await DailySession.findOne({ where: { status: 'OPEN' } });
@@ -19,12 +14,18 @@ exports.openSession = async (req, res) => {
         const session = await DailySession.create({
             date: new Date(),
             status: 'OPEN',
-            opening_balance_laci1,
-            opening_balance_laci2,
-            opening_balance_brilink,
-            opening_balance_dana,
-            opening_balance_digipos,
         });
+
+        // Create SessionBalance records
+        if (balances && balances.length > 0) {
+            await Promise.all(balances.map(b =>
+                SessionBalance.create({
+                    session_id: session.id,
+                    wallet_id: b.wallet_id,
+                    opening_balance: b.opening_balance
+                })
+            ));
+        }
 
         res.status(201).json(session);
     } catch (error) {
@@ -36,12 +37,8 @@ exports.closeSession = async (req, res) => {
     try {
         const { id } = req.params;
         const {
-            closing_balance_brilink,
-            closing_balance_dana,
-            closing_balance_digipos,
-            actual_cash_laci1,
-            actual_cash_laci2,
-            cash_counts, // Array of { drawer, count_100k, ... }
+            balances, // Array of { wallet_id, closing_balance (digital) or actual_balance (physical) }
+            cash_counts,
             notes
         } = req.body;
 
@@ -50,13 +47,41 @@ exports.closeSession = async (req, res) => {
 
         await session.update({
             status: 'CLOSED',
-            closing_balance_brilink,
-            closing_balance_dana,
-            closing_balance_digipos,
-            actual_cash_laci1,
-            actual_cash_laci2,
             notes
         });
+
+        // Update SessionBalance records
+        if (balances && balances.length > 0) {
+            await Promise.all(balances.map(async (b) => {
+                const balanceRecord = await SessionBalance.findOne({
+                    where: { session_id: id, wallet_id: b.wallet_id }
+                });
+
+                if (balanceRecord) {
+                    // Check wallet type to decide where to save
+                    const wallet = await Wallet.findByPk(b.wallet_id);
+                    if (wallet.type === 'DIGITAL') {
+                        await balanceRecord.update({ closing_balance: b.closing_balance });
+                    } else {
+                        await balanceRecord.update({ actual_balance: b.actual_balance });
+                    }
+                } else {
+                    // Create if not exists (e.g. new wallet added mid-session? unlikely but safe)
+                    // Or if it wasn't initialized at open
+                    const wallet = await Wallet.findByPk(b.wallet_id);
+                    const data = {
+                        session_id: id,
+                        wallet_id: b.wallet_id,
+                    };
+                    if (wallet.type === 'DIGITAL') {
+                        data.closing_balance = b.closing_balance;
+                    } else {
+                        data.actual_balance = b.actual_balance;
+                    }
+                    await SessionBalance.create(data);
+                }
+            }));
+        }
 
         if (cash_counts && cash_counts.length > 0) {
             await CashCount.bulkCreate(cash_counts.map(c => ({ ...c, session_id: id })));
@@ -72,9 +97,84 @@ exports.getCurrentSession = async (req, res) => {
     try {
         const session = await DailySession.findOne({
             where: { status: 'OPEN' },
-            include: [Transaction]
+            include: [
+                { model: Transaction },
+                {
+                    model: SessionBalance,
+                    include: [Wallet]
+                }
+            ]
         });
         res.json(session);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getLastClosedSession = async (req, res) => {
+    try {
+        const session = await DailySession.findOne({
+            where: { status: 'CLOSED' },
+            order: [['createdAt', 'DESC']],
+            include: [
+                {
+                    model: SessionBalance,
+                    include: [Wallet]
+                }
+            ]
+        });
+        res.json(session);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getAllSessions = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        const whereClause = {};
+
+        if (startDate && endDate) {
+            whereClause.date = {
+                [Op.between]: [startDate, endDate]
+            };
+        } else if (startDate) {
+            whereClause.date = {
+                [Op.gte]: startDate
+            };
+        } else if (endDate) {
+            whereClause.date = {
+                [Op.lte]: endDate
+            };
+        }
+
+        const sessions = await DailySession.findAll({
+            where: whereClause,
+            order: [['date', 'DESC']],
+            include: [
+                {
+                    model: SessionBalance,
+                    include: [Wallet]
+                }
+            ]
+        });
+        res.json(sessions);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.updateSession = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date, status } = req.body;
+
+        const session = await DailySession.findByPk(id);
+        if (!session) return res.status(404).json({ message: 'Session not found' });
+
+        await session.update({ date, status });
+
+        res.json({ message: 'Session updated successfully', session });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
