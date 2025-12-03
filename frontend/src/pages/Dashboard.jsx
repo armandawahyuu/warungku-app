@@ -14,7 +14,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 
 const Dashboard = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const [session, setSession] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [wallets, setWallets] = useState([]);
@@ -80,10 +80,19 @@ const Dashboard = () => {
                     <p className="text-gray-500 mb-8">Warung belum dibuka hari ini. Silahkan buka sesi baru untuk mulai mencatat.</p>
                     <Link
                         to="/open-session"
-                        className="block w-full bg-blue-600 text-white px-6 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg hover:shadow-blue-200 transform hover:-translate-y-1"
+                        className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition w-full"
                     >
+                        <Store className="w-5 h-5" />
                         Buka Warung Sekarang
                     </Link>
+
+                    <button
+                        onClick={logout}
+                        className="mt-4 w-full flex items-center justify-center gap-2 text-red-600 font-medium hover:bg-red-50 px-8 py-3 rounded-xl transition"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        Logout
+                    </button>
                 </div>
             </div>
         );
