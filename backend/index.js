@@ -1,4 +1,9 @@
 const express = require('express');
+const dns = require('dns');
+// Force IPv4 to avoid ENETUNREACH errors with Supabase on Render
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 const cors = require('cors');
 const { sequelize } = require('./models');
 const apiRoutes = require('./routes/api');
