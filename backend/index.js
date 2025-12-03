@@ -6,7 +6,7 @@ const seedUsers = require('./seedUsers');
 require('dotenv').config();
 
 const app = express();
-const PORT = 5001; // Hardcoded to avoid AirTunes conflict on 5000
+const PORT = process.env.PORT || 5001; // Use env port or default to 5001
 
 app.use(cors({
     origin: '*',
