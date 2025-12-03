@@ -8,7 +8,8 @@ import {
     Wallet,
     Store,
     CreditCard,
-    Smartphone
+    Smartphone,
+    LogOut
 } from 'lucide-react';
 
 import { useAuth } from '../hooks/useAuth';
