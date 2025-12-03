@@ -1,17 +1,10 @@
 const express = require('express');
-const dns = require('dns');
-// Force IPv4 to avoid ENETUNREACH errors with Supabase on Render
-if (dns.setDefaultResultOrder) {
-    dns.setDefaultResultOrder('ipv4first');
-}
 const cors = require('cors');
-const { sequelize } = require('./models');
-const apiRoutes = require('./routes/api');
-const seedUsers = require('./seedUsers');
+const dns = require('dns').promises;
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5001; // Use env port or default to 5001
+const PORT = process.env.PORT || 5001;
 
 app.use(cors({
     origin: '*',
@@ -20,21 +13,48 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.use('/api', apiRoutes);
+// Async start function to handle DNS resolution before DB connection
+async function startServer() {
+    try {
+        // Resolve Supabase Host to IPv4 to avoid ENETUNREACH (IPv6) errors
+        if (process.env.DB_HOST && process.env.DB_HOST !== 'localhost') {
+            console.log(`Resolving DB_HOST: ${process.env.DB_HOST}`);
+            try {
+                const addresses = await dns.resolve4(process.env.DB_HOST);
+                if (addresses && addresses.length > 0) {
+                    console.log(`Resolved to IPv4: ${addresses[0]}`);
+                    process.env.DB_HOST = addresses[0];
+                }
+            } catch (dnsError) {
+                console.error('DNS Resolution failed, using original host:', dnsError);
+            }
+        }
 
-// Sync database and start server
-// Sync database and start server
-if (require.main === module) {
-    sequelize.sync({ alter: true }).then(async () => {
+        // Require models and routes AFTER resolving IP
+        // This ensures config/database.js uses the resolved IPv4 address
+        const { sequelize } = require('./models');
+        const apiRoutes = require('./routes/api');
+        const seedUsers = require('./seedUsers');
+
+        app.use('/api', apiRoutes);
+
+        await sequelize.sync({ alter: true });
         console.log('Database synced');
+
         await seedUsers(); // Create default admin user
+
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });
-    }).catch(err => {
-        console.error('Database sync error:', err);
-    });
+
+    } catch (error) {
+        console.error('Failed to start server:', error);
+    }
+}
+
+// Start the server if run directly
+if (require.main === module) {
+    startServer();
 }
 
 module.exports = app;
-
