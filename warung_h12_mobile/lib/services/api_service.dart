@@ -1,17 +1,19 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // Use localhost for Web and iOS, 10.0.2.2 for Android Emulator
-  static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://127.0.0.1:5001/api';
+  // Use Render (Cloud) for Release (APK), Localhost for Web Debug, and LAN IP for Mobile Debug
+  static String get _baseUrl {
+    if (kReleaseMode) {
+      return 'https://warungku-api.onrender.com/api';
     }
-    // For mobile platforms, we'd check Platform.isAndroid here
-    // but for now, default to localhost
-    return 'http://127.0.0.1:5001/api';
+    if (kIsWeb) {
+      return 'http://localhost:5001/api';
+    }
+    // Use Render (Cloud) for Mobile Debug as well to verify deployment
+    return 'https://warungku-api.onrender.com/api'; 
   }
 
   Future<String?> getToken() async {
@@ -29,7 +31,7 @@ class ApiService {
 
   Future<dynamic> post(String endpoint, Map<String, dynamic> body) async {
     final response = await http.post(
-      Uri.parse('$baseUrl$endpoint'),
+      Uri.parse('$_baseUrl$endpoint'),
       headers: await _getHeaders(),
       body: jsonEncode(body),
     );
@@ -38,7 +40,7 @@ class ApiService {
 
   Future<dynamic> get(String endpoint) async {
     final response = await http.get(
-      Uri.parse('$baseUrl$endpoint'),
+      Uri.parse('$_baseUrl$endpoint'),
       headers: await _getHeaders(),
     );
     return _handleResponse(response);
@@ -46,7 +48,7 @@ class ApiService {
 
   Future<dynamic> delete(String endpoint) async {
     final response = await http.delete(
-      Uri.parse('$baseUrl$endpoint'),
+      Uri.parse('$_baseUrl$endpoint'),
       headers: await _getHeaders(),
     );
     return _handleResponse(response);
