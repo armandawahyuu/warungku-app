@@ -21,6 +21,9 @@ SessionBalance.belongsTo(DailySession, { foreignKey: 'session_id' });
 Wallet.hasMany(SessionBalance, { foreignKey: 'wallet_id' });
 SessionBalance.belongsTo(Wallet, { foreignKey: 'wallet_id' });
 
+Transaction.belongsTo(Wallet, { as: 'FromWallet', foreignKey: 'source_wallet', constraints: false });
+Transaction.belongsTo(Wallet, { as: 'ToWallet', foreignKey: 'destination_wallet', constraints: false });
+
 module.exports = {
     sequelize,
     DailySession,

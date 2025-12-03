@@ -107,18 +107,18 @@ const Dashboard = () => {
         // Find opening balance for this wallet
         const balanceRecord = session.SessionBalances.find(b => b.wallet_id === walletId);
 
-        if (isClosedView) {
-            // If closed view, show the final balance (closing or actual)
-            if (balanceRecord) {
-                const wallet = wallets.find(w => w.id === walletId);
-                if (wallet?.type === 'DIGITAL') {
-                    return Number(balanceRecord.closing_balance || 0);
-                } else {
-                    return Number(balanceRecord.actual_balance || 0);
-                }
-            }
-            return 0;
-        }
+        // if (isClosedView) {
+        //     // If closed view, show the final balance (closing or actual)
+        //     if (balanceRecord) {
+        //         const wallet = wallets.find(w => w.id === walletId);
+        //         if (wallet?.type === 'DIGITAL') {
+        //             return Number(balanceRecord.closing_balance || 0);
+        //         } else {
+        //             return Number(balanceRecord.actual_balance || 0);
+        //         }
+        //     }
+        //     return 0;
+        // }
 
         if (balanceRecord) {
             total += Number(balanceRecord.opening_balance || 0);
@@ -151,12 +151,21 @@ const Dashboard = () => {
                         </h1>
                         <p className="text-xs text-gray-500 mt-1">Sesi: {new Date(session.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     </div>
-                    {isClosedView && (
-                        <div className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                    <div className="flex items-center gap-4">
+                        <div className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 ${isClosedView
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-emerald-100 text-emerald-700'
+                            }`}>
                             <Store className="w-4 h-4" />
-                            Warung Tutup
+                            {isClosedView ? 'Warung Tutup' : 'Warung Buka'}
                         </div>
-                    )}
+                        <div className="text-right hidden md:block">
+                            <p className="text-sm font-semibold text-gray-900 capitalize">{user?.username || 'User'}</p>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
+                                {user?.role || 'KASIR'}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -193,10 +202,12 @@ const Dashboard = () => {
                     </div>
                 </section>
 
-                {/* Quick Actions - Hide if closed */}
-                {!isClosedView && (
+                {/* Quick Actions - Hide if closed, unless ADMIN */}
+                {(!isClosedView || user?.role === 'ADMIN') && (
                     <section>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Aksi Cepat</h2>
+                        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                            Aksi Cepat {isClosedView && <span className="text-sm font-normal text-red-500 ml-2">(Mode Admin)</span>}
+                        </h2>
                         <div className="grid grid-cols-3 gap-4">
                             <ActionLink
                                 to="/transaction/income"

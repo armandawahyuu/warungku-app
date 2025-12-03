@@ -120,9 +120,41 @@ exports.getLastClosedSession = async (req, res) => {
                 {
                     model: SessionBalance,
                     include: [Wallet]
+                },
+                {
+                    model: Transaction // Include transactions to calculate theoretical balance
                 }
             ]
         });
+
+        if (session && session.SessionBalances) {
+            // Calculate theoretical balance for each wallet
+            session.SessionBalances.forEach(balance => {
+                const walletId = balance.wallet_id;
+                let theoreticalBalance = Number(balance.opening_balance);
+
+                session.Transactions.forEach(trx => {
+                    if (trx.destination_wallet === walletId) {
+                        theoreticalBalance += Number(trx.amount);
+                    }
+                    if (trx.source_wallet === walletId) {
+                        theoreticalBalance -= Number(trx.amount);
+                    }
+                });
+
+                // If stored closing/actual balance is 0 (likely due to error), use theoretical
+                if (balance.Wallet.type === 'DIGITAL') {
+                    if (Number(balance.closing_balance) === 0) {
+                        balance.setDataValue('closing_balance', theoreticalBalance);
+                    }
+                } else {
+                    if (Number(balance.actual_balance) === 0) {
+                        balance.setDataValue('actual_balance', theoreticalBalance);
+                    }
+                }
+            });
+        }
+
         res.json(session);
     } catch (error) {
         res.status(500).json({ error: error.message });

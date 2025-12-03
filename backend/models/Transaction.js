@@ -20,11 +20,11 @@ const Transaction = sequelize.define('Transaction', {
         allowNull: false,
     },
     source_wallet: {
-        type: DataTypes.STRING, // Changed from ENUM to STRING for dynamic wallets
+        type: DataTypes.UUID,
         allowNull: true,
     },
     destination_wallet: {
-        type: DataTypes.STRING, // Changed from ENUM to STRING for dynamic wallets
+        type: DataTypes.UUID,
         allowNull: true,
     },
     description: {
