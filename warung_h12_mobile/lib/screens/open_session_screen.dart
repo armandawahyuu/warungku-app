@@ -19,7 +19,7 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
   final ApiService _apiService = ApiService();
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _balanceControllers = {};
-  
+
   List<Wallet> _wallets = [];
   bool _isLoading = true;
   bool _isSubmitting = false;
@@ -41,14 +41,17 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
       final lastSessionData = results[1];
 
       setState(() {
-        _wallets = (walletsData as List).map((w) => Wallet.fromJson(w)).toList();
-        
+        _wallets = (walletsData as List)
+            .map((w) => Wallet.fromJson(w))
+            .toList();
+
         // Initialize controllers
         for (var wallet in _wallets) {
           String initialValue = '0';
 
           // Try to find balance from last session
-          if (lastSessionData != null && lastSessionData['SessionBalances'] != null) {
+          if (lastSessionData != null &&
+              lastSessionData['SessionBalances'] != null) {
             final balances = lastSessionData['SessionBalances'] as List;
             final balanceData = balances.firstWhere(
               (b) => b['wallet_id'] == wallet.id,
@@ -58,29 +61,33 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
             if (balanceData != null) {
               double amount = 0;
               if (wallet.type == 'DIGITAL') {
-                amount = double.parse(balanceData['closing_balance'].toString());
+                amount = double.parse(
+                  balanceData['closing_balance'].toString(),
+                );
               } else {
                 amount = double.parse(balanceData['actual_balance'].toString());
               }
               // Format number for display
               initialValue = NumberFormat.currency(
-                locale: 'id_ID', 
-                symbol: '', 
-                decimalDigits: 0
+                locale: 'id_ID',
+                symbol: '',
+                decimalDigits: 0,
               ).format(amount).trim();
             }
           }
 
-          _balanceControllers[wallet.id] = TextEditingController(text: initialValue);
+          _balanceControllers[wallet.id] = TextEditingController(
+            text: initialValue,
+          );
         }
         _isLoading = false;
       });
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -95,7 +102,9 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
       final balances = _wallets.map((wallet) {
         return {
           'wallet_id': wallet.id,
-          'opening_balance': parseFormattedNumber(_balanceControllers[wallet.id]!.text),
+          'opening_balance': parseFormattedNumber(
+            _balanceControllers[wallet.id]!.text,
+          ),
         };
       }).toList();
 
@@ -108,18 +117,20 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
       // Refresh dashboard
       if (mounted) {
         final user = Provider.of<AuthProvider>(context, listen: false).user;
-        await Provider.of<DashboardProvider>(context, listen: false)
-            .fetchDashboardData(userRole: user?.role);
+        await Provider.of<DashboardProvider>(
+          context,
+          listen: false,
+        ).fetchDashboardData(userRole: user?.role);
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sesi berhasil dibuka!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Sesi berhasil dibuka!')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -128,7 +139,11 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -162,7 +177,11 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(LucideIcons.info, color: Color(0xFF2563EB), size: 20),
+                          const Icon(
+                            LucideIcons.info,
+                            color: Color(0xFF2563EB),
+                            size: 20,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -175,7 +194,10 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   'Tanggal: ${DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now())}',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
                               ],
                             ),
@@ -188,7 +210,10 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
                     // Instructions
                     const Text(
                       'Masukkan Saldo Awal',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -232,7 +257,9 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
                             TextFormField(
                               controller: _balanceControllers[wallet.id],
                               keyboardType: TextInputType.number,
-                              inputFormatters: [ThousandsSeparatorInputFormatter()],
+                              inputFormatters: [
+                                ThousandsSeparatorInputFormatter(),
+                              ],
                               decoration: InputDecoration(
                                 prefixText: 'Rp ',
                                 hintText: '0',
@@ -243,7 +270,8 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
                                 fillColor: Colors.grey.shade50,
                               ),
                               validator: (value) {
-                                if (value == null || value.isEmpty) return 'Wajib diisi';
+                                if (value == null || value.isEmpty)
+                                  return 'Wajib diisi';
                                 final number = parseFormattedNumber(value);
                                 if (number < 0) return 'Tidak boleh negatif';
                                 return null;
@@ -252,7 +280,7 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
 
                     const SizedBox(height: 24),
 
@@ -277,7 +305,10 @@ class _OpenSessionScreenState extends State<OpenSessionScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(LucideIcons.store, color: Colors.white),
+                            : const Icon(
+                                LucideIcons.store,
+                                color: Colors.white,
+                              ),
                         label: Text(
                           _isSubmitting ? 'Membuka Sesi...' : 'Buka Warung',
                           style: const TextStyle(

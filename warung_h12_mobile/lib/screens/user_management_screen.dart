@@ -17,7 +17,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   List<User> _users = [];
   bool _isLoading = true;
   String _selectedRole = 'KASIR';
@@ -33,7 +33,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     if (user?.role != 'ADMIN') {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Akses ditolak. Hanya ADMIN yang dapat mengakses halaman ini.')),
+        const SnackBar(
+          content: Text(
+            'Akses ditolak. Hanya ADMIN yang dapat mengakses halaman ini.',
+          ),
+        ),
       );
       return;
     }
@@ -51,9 +55,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -67,12 +71,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         'password': _passwordController.text,
         'role': _selectedRole,
       });
-      
+
       _usernameController.clear();
       _passwordController.clear();
       setState(() => _selectedRole = 'KASIR');
       await _fetchUsers();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('User berhasil ditambahkan')),
@@ -80,16 +84,16 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal: $e')));
       }
     }
   }
 
   Future<void> _deleteUser(String id, String username) async {
     final currentUser = Provider.of<AuthProvider>(context, listen: false).user;
-    
+
     if (currentUser?.id == id) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tidak dapat menghapus diri sendiri')),
@@ -121,17 +125,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     try {
       await _apiService.delete('/users/$id');
       await _fetchUsers();
-      
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User berhasil dihapus')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('User berhasil dihapus')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal: $e')));
       }
     }
   }
@@ -246,7 +250,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _selectedRole,
+                      initialValue: _selectedRole,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -300,15 +304,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 SizedBox(width: 8),
                 Text(
                   'Daftar User',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            
+
             if (_isLoading)
               const Center(
                 child: Padding(
@@ -351,7 +352,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   final user = _users[index];
                   final isAdmin = user.role == 'ADMIN';
                   final isSelf = user.id == currentUser?.id;
-                  
+
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -402,7 +403,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         ),
                         if (!isSelf)
                           IconButton(
-                            onPressed: () => _deleteUser(user.id, user.username),
+                            onPressed: () =>
+                                _deleteUser(user.id, user.username),
                             icon: const Icon(
                               LucideIcons.trash2,
                               size: 18,

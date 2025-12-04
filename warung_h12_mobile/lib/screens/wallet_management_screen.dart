@@ -14,7 +14,7 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
   final ApiService _apiService = ApiService();
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  
+
   List<Wallet> _wallets = [];
   bool _isLoading = true;
   String _selectedType = 'DIGITAL';
@@ -36,9 +36,9 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -51,10 +51,10 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
         'name': _nameController.text,
         'type': _selectedType,
       });
-      
+
       _nameController.clear();
       await _fetchWallets();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Dompet berhasil ditambahkan')),
@@ -62,9 +62,9 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal: $e')));
       }
     }
   }
@@ -94,7 +94,7 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
     try {
       await _apiService.delete('/wallets/$id');
       await _fetchWallets();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Dompet berhasil dihapus')),
@@ -102,9 +102,9 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal: $e')));
       }
     }
   }
@@ -193,7 +193,7 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _selectedType,
+                      initialValue: _selectedType,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -248,13 +248,10 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
             // List
             const Text(
               'Daftar Dompet',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            
+
             if (_isLoading)
               const Center(
                 child: Padding(
@@ -296,11 +293,12 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _wallets.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final wallet = _wallets[index];
                   final isDigital = wallet.type == 'DIGITAL';
-                  
+
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -325,7 +323,9 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            isDigital ? LucideIcons.smartphone : LucideIcons.archive,
+                            isDigital
+                                ? LucideIcons.smartphone
+                                : LucideIcons.archive,
                             color: isDigital
                                 ? const Color(0xFF9333EA)
                                 : const Color(0xFF10B981),
@@ -367,7 +367,8 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
                           ),
                         ),
                         IconButton(
-                          onPressed: () => _deleteWallet(wallet.id, wallet.name),
+                          onPressed: () =>
+                              _deleteWallet(wallet.id, wallet.name),
                           icon: const Icon(
                             LucideIcons.trash2,
                             color: Colors.red,

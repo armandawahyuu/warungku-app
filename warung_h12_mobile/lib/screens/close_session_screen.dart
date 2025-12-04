@@ -18,7 +18,7 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
   final ApiService _apiService = ApiService();
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _actualBalanceControllers = {};
-  
+
   int _currentStep = 1; // 1: Input, 2: Review
   bool _isSubmitting = false;
 
@@ -26,12 +26,13 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
   void initState() {
     super.initState();
     final dashboard = Provider.of<DashboardProvider>(context, listen: false);
-    
+
     // Initialize controllers with current calculated balances
     for (var wallet in dashboard.wallets) {
       final currentBalance = dashboard.getWalletBalance(wallet.id);
-      _actualBalanceControllers[wallet.id] = 
-          TextEditingController(text: currentBalance.toStringAsFixed(0));
+      _actualBalanceControllers[wallet.id] = TextEditingController(
+        text: currentBalance.toStringAsFixed(0),
+      );
     }
   }
 
@@ -45,19 +46,22 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
 
     try {
       final dashboard = Provider.of<DashboardProvider>(context, listen: false);
-      
+
       // Prepare cash counts (actual balances)
       final cashCounts = dashboard.wallets.map((wallet) {
         return {
           'drawer': wallet.name,
-          'actual_amount': parseFormattedNumber(_actualBalanceControllers[wallet.id]!.text),
+          'actual_amount': parseFormattedNumber(
+            _actualBalanceControllers[wallet.id]!.text,
+          ),
         };
       }).toList();
 
       // Close session
-      await _apiService.post('/sessions/${dashboard.currentSession!.id}/close', {
-        'cash_counts': cashCounts,
-      });
+      await _apiService.post(
+        '/sessions/${dashboard.currentSession!.id}/close',
+        {'cash_counts': cashCounts},
+      );
 
       if (mounted) {
         // Show success message
@@ -67,19 +71,19 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Logout user and clear data
         await Provider.of<AuthProvider>(context, listen: false).logout();
         Provider.of<DashboardProvider>(context, listen: false).clearData();
-        
+
         // Navigate back to login (handled by auth wrapper usually, but pop to be safe)
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -89,7 +93,7 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
   @override
   Widget build(BuildContext context) {
     final dashboard = Provider.of<DashboardProvider>(context);
-    
+
     if (dashboard.currentSession == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Tutup Warung')),
@@ -120,14 +124,18 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
           },
         ),
       ),
-      body: _currentStep == 1 
-          ? _buildInputStep(dashboard) 
+      body: _currentStep == 1
+          ? _buildInputStep(dashboard)
           : _buildReviewStep(dashboard),
     );
   }
 
   Widget _buildInputStep(DashboardProvider dashboard) {
-    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -213,7 +221,8 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
                         fillColor: Colors.grey.shade50,
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Wajib diisi';
+                        if (value == null || value.isEmpty)
+                          return 'Wajib diisi';
                         final number = parseFormattedNumber(value);
                         if (number < 0) return 'Tidak boleh negatif';
                         return null;
@@ -222,7 +231,7 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
 
             const SizedBox(height: 24),
             SizedBox(
@@ -253,7 +262,11 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
   }
 
   Widget _buildReviewStep(DashboardProvider dashboard) {
-    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
     bool hasDifference = false;
 
     return SingleChildScrollView(
@@ -275,9 +288,11 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
           // Summary Cards
           ...dashboard.wallets.map((wallet) {
             final systemBalance = dashboard.getWalletBalance(wallet.id);
-            final actualBalance = parseFormattedNumber(_actualBalanceControllers[wallet.id]!.text);
+            final actualBalance = parseFormattedNumber(
+              _actualBalanceControllers[wallet.id]!.text,
+            );
             final diff = actualBalance - systemBalance;
-            
+
             if (diff != 0) hasDifference = true;
 
             return Container(
@@ -287,7 +302,9 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: diff == 0 ? Colors.grey.shade200 : Colors.orange.shade200,
+                  color: diff == 0
+                      ? Colors.grey.shade200
+                      : Colors.orange.shade200,
                   width: diff == 0 ? 1 : 2,
                 ),
                 boxShadow: [
@@ -305,11 +322,17 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
                     children: [
                       Text(
                         wallet.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       if (diff != 0)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.orange.shade100,
                             borderRadius: BorderRadius.circular(4),
@@ -333,12 +356,21 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Selisih', style: TextStyle(color: Colors.grey)),
+                      const Text(
+                        'Selisih',
+                        style: TextStyle(color: Colors.grey),
+                      ),
                       Text(
-                        diff == 0 ? '-' : (diff > 0 ? '+${formatter.format(diff)}' : formatter.format(diff)),
+                        diff == 0
+                            ? '-'
+                            : (diff > 0
+                                  ? '+${formatter.format(diff)}'
+                                  : formatter.format(diff)),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: diff == 0 ? Colors.grey : (diff > 0 ? Colors.green : Colors.red),
+                          color: diff == 0
+                              ? Colors.grey
+                              : (diff > 0 ? Colors.green : Colors.red),
                         ),
                       ),
                     ],
@@ -346,7 +378,7 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
                 ],
               ),
             );
-          }).toList(),
+          }),
 
           if (hasDifference)
             Container(
@@ -359,12 +391,18 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(LucideIcons.alertTriangle, color: Colors.orange.shade700),
+                  Icon(
+                    LucideIcons.alertTriangle,
+                    color: Colors.orange.shade700,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Terdapat selisih saldo. Pastikan alasan selisih sudah diketahui sebelum melanjutkan.',
-                      style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.orange.shade700,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -387,7 +425,10 @@ class _CloseSessionScreenState extends State<CloseSessionScreen> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
                     )
                   : const Icon(LucideIcons.checkCircle, color: Colors.white),
               label: Text(

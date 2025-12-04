@@ -53,11 +53,11 @@ class AuthProvider with ChangeNotifier {
     if (!prefs.containsKey('token')) return;
 
     // In a real app, you might validate the token with the backend here
-    // For now, we just check if it exists. 
+    // For now, we just check if it exists.
     // Ideally, we should store user data properly or fetch it again.
     // Since we didn't implement /auth/me, we'll just require login for now if data is missing.
     // Or we can decode the token if it's JWT.
-    
+
     // For simplicity in this MVP, let's just clear if no user data is stored properly
     // or implement a simple check.
   }

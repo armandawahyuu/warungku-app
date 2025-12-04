@@ -20,7 +20,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   String? _selectedCategoryId;
   String? _selectedFromWalletId;
   String? _selectedToWalletId;
@@ -39,24 +39,29 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     final dashboard = Provider.of<DashboardProvider>(context, listen: false);
     if (dashboard.currentSession == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak ada sesi aktif')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Tidak ada sesi aktif')));
       return;
     }
 
     setState(() => _isSubmitting = true);
 
-    final success = await Provider.of<TransactionProvider>(context, listen: false)
-        .createTransaction(
-      sessionId: dashboard.currentSession!.id,
-      type: widget.type,
-      amount: parseFormattedNumber(_amountController.text),
-      categoryId: _selectedCategoryId,
-      fromWalletId: _selectedFromWalletId,
-      toWalletId: _selectedToWalletId,
-      description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
-    );
+    final success =
+        await Provider.of<TransactionProvider>(
+          context,
+          listen: false,
+        ).createTransaction(
+          sessionId: dashboard.currentSession!.id,
+          type: widget.type,
+          amount: parseFormattedNumber(_amountController.text),
+          categoryId: _selectedCategoryId,
+          fromWalletId: _selectedFromWalletId,
+          toWalletId: _selectedToWalletId,
+          description: _descriptionController.text.isEmpty
+              ? null
+              : _descriptionController.text,
+        );
 
     setState(() => _isSubmitting = false);
 
@@ -64,7 +69,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       // Refresh dashboard
       final user = Provider.of<AuthProvider>(context, listen: false).user;
       await dashboard.fetchDashboardData(userRole: user?.role);
-      
+
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +80,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal: ${Provider.of<TransactionProvider>(context, listen: false).error}'),
+            content: Text(
+              'Gagal: ${Provider.of<TransactionProvider>(context, listen: false).error}',
+            ),
           ),
         );
       }
@@ -85,7 +92,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   @override
   Widget build(BuildContext context) {
     final transactionProvider = Provider.of<TransactionProvider>(context);
-    
+
     String title;
     IconData icon;
     Color color;
@@ -137,7 +144,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     // Amount
                     const Text(
                       'Jumlah',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
@@ -152,7 +162,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Wajib diisi';
+                        if (value == null || value.isEmpty)
+                          return 'Wajib diisi';
                         final number = parseFormattedNumber(value);
                         if (number <= 0) return 'Harus lebih dari 0';
                         return null;
@@ -164,11 +175,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     if (widget.type != 'TRANSFER') ...[
                       const Text(
                         'Kategori',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _selectedCategoryId,
+                        initialValue: _selectedCategoryId,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -177,28 +191,39 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         hint: const Text('Pilih Kategori'),
                         items: transactionProvider
                             .getCategoriesByType(widget.type)
-                            .map((category) => DropdownMenuItem(
-                                  value: category.id,
-                                  child: Text(category.name),
-                                ))
+                            .map(
+                              (category) => DropdownMenuItem(
+                                value: category.id,
+                                child: Text(category.name),
+                              ),
+                            )
                             .toList(),
                         onChanged: (value) {
                           setState(() => _selectedCategoryId = value);
                         },
-                        validator: (value) => value == null ? 'Wajib dipilih' : null,
+                        validator: (value) =>
+                            value == null ? 'Wajib dipilih' : null,
                       ),
                       const SizedBox(height: 16),
                     ],
 
                     // Wallet selection
-                    if (widget.type == 'INCOME' || widget.type == 'EXPENSE') ...[
+                    if (widget.type == 'INCOME' ||
+                        widget.type == 'EXPENSE') ...[
                       Text(
-                        widget.type == 'INCOME' ? 'Masuk ke Dompet' : 'Dari Dompet',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        widget.type == 'INCOME'
+                            ? 'Masuk ke Dompet'
+                            : 'Dari Dompet',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: widget.type == 'INCOME' ? _selectedToWalletId : _selectedFromWalletId,
+                        initialValue: widget.type == 'INCOME'
+                            ? _selectedToWalletId
+                            : _selectedFromWalletId,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -206,10 +231,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                         hint: const Text('Pilih Dompet'),
                         items: transactionProvider.wallets
-                            .map((wallet) => DropdownMenuItem(
-                                  value: wallet.id,
-                                  child: Text(wallet.name),
-                                ))
+                            .map(
+                              (wallet) => DropdownMenuItem(
+                                value: wallet.id,
+                                child: Text(wallet.name),
+                              ),
+                            )
                             .toList(),
                         onChanged: (value) {
                           setState(() {
@@ -220,7 +247,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             }
                           });
                         },
-                        validator: (value) => value == null ? 'Wajib dipilih' : null,
+                        validator: (value) =>
+                            value == null ? 'Wajib dipilih' : null,
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -229,11 +257,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     if (widget.type == 'TRANSFER') ...[
                       const Text(
                         'Dari Dompet',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _selectedFromWalletId,
+                        initialValue: _selectedFromWalletId,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -241,24 +272,30 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                         hint: const Text('Pilih Dompet Asal'),
                         items: transactionProvider.wallets
-                            .map((wallet) => DropdownMenuItem(
-                                  value: wallet.id,
-                                  child: Text(wallet.name),
-                                ))
+                            .map(
+                              (wallet) => DropdownMenuItem(
+                                value: wallet.id,
+                                child: Text(wallet.name),
+                              ),
+                            )
                             .toList(),
                         onChanged: (value) {
                           setState(() => _selectedFromWalletId = value);
                         },
-                        validator: (value) => value == null ? 'Wajib dipilih' : null,
+                        validator: (value) =>
+                            value == null ? 'Wajib dipilih' : null,
                       ),
                       const SizedBox(height: 16),
                       const Text(
                         'Ke Dompet',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _selectedToWalletId,
+                        initialValue: _selectedToWalletId,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -267,15 +304,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         hint: const Text('Pilih Dompet Tujuan'),
                         items: transactionProvider.wallets
                             .where((w) => w.id != _selectedFromWalletId)
-                            .map((wallet) => DropdownMenuItem(
-                                  value: wallet.id,
-                                  child: Text(wallet.name),
-                                ))
+                            .map(
+                              (wallet) => DropdownMenuItem(
+                                value: wallet.id,
+                                child: Text(wallet.name),
+                              ),
+                            )
                             .toList(),
                         onChanged: (value) {
                           setState(() => _selectedToWalletId = value);
                         },
-                        validator: (value) => value == null ? 'Wajib dipilih' : null,
+                        validator: (value) =>
+                            value == null ? 'Wajib dipilih' : null,
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -283,7 +323,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     // Description
                     const Text(
                       'Keterangan (Opsional)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
@@ -311,7 +354,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           ),
                         ),
                         child: _isSubmitting
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
                             : Text(
                                 'Simpan Transaksi',
                                 style: const TextStyle(
