@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>codebyyu | Ready-to-use starter kits for modern web developers</title>
+    <meta name="description" content="codebyyu sells premium templates and boilerplates to accelerate your development workflow.">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #030712;
+            --card-bg: #111827;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --border-color: #1f2937;
+            --glass-bg: rgba(17, 24, 39, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background Effects */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
+        }
+
+        section {
+            padding: 100px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        a {
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        button, .btn {
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Hero Section */
+        #hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-top: 0;
+        }
+
+        .hero-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .hero-tagline {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(to right, #fff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-desc {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+
+        /* Products Section */
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 60px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-5px);
+        }
+
+        .badge {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 16px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+        }
+
+        /* Tech Stack */
+        #tech {
+            text-align: center;
+        }
+
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .tech-item {
+            background: var(--glass-bg);
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            color: var(--text-primary);
+            border-color: var(--accent-primary);
+            transform: scale(1.05);
+        }
+
+        /* About Section */
+        #about {
+            text-align: center;
+        }
+
+        .about-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @media (max-width: 768px) {
+            .hero-tagline { font-size: 2.8rem; }
+            section { padding: 60px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <section id="hero" class="reveal">
+        <div class="hero-name">codebyyu</div>
+        <h1 class="hero-tagline">Ready-to-use starter kits for modern web developers</h1>
+        <p class="hero-desc">Accelerate your development cycle with our curated collection of templates, boilerplates, and tools designed for scalability and performance.</p>
+        <a href="https://codebyyu.lemonsqueezy.com" class="btn btn-primary" target="_blank">Browse Products</a>
+    </section>
+
+    <section id="products">
+        <h2 class="section-title reveal">Our Products</h2>
+        <div class="grid">
+            <div class="card reveal" style="animation-delay: 0.1s;">
+                <span class="badge">Coming Soon</span>
+                <h3>Inventory Management Starter Kit</h3>
+                <p>Full-stack inventory system with real-time tracking, barcode support, and beautiful analytics dashboard.</p>
+            </div>
+            <div class="card reveal" style="animation-delay: 0.2s;">
+                <span class="badge">Coming Soon</span>
+                <h3>Admin Dashboard Template</h3>
+                <p>Clean, minimal, and responsive dashboard template with pre-built components for every use case.</p>
+            </div>
+            <div class="card reveal" style="animation-delay: 0.3s;">
+                <span class="badge">Coming Soon</span>
+                <h3>SaaS Boilerplate</h3>
+                <p>The ultimate foundation for your next SaaS. Includes Auth, Subscriptions, API routes, and more.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="tech">
+        <h2 class="section-title reveal">Built With Best-in-Class Tech</h2>
+        <div class="tech-list reveal">
+            <div class="tech-item">Next.js</div>
+            <div class="tech-item">React</div>
+            <div class="tech-item">TypeScript</div>
+            <div class="tech-item">Tailwind CSS</div>
+            <div class="tech-item">PostgreSQL</div>
+            <div class="tech-item">Prisma</div>
+        </div>
+    </section>
+
+    <section id="about">
+        <div class="about-content reveal">
+            <h2 class="section-title">About codebyyu</h2>
+            <p class="hero-desc" style="margin: 0 auto;">An Indonesian developer passionate about crafting tools that empower other developers to build better products, faster. We focus on clean code, modern architecture, and exceptional developer experience.</p>
+        </div>
+    </section>
+
+    <footer class="reveal">
+        <p>&copy; 2025 codebyyu. All rights reserved.</p>
+        <div class="footer-links">
+            <a href="https://github.com/armandawahyuu" target="_blank">GitHub</a>
+            <a href="https://twitter.com" target="_blank">Twitter/X</a>
+            <a href="mailto:hello@codebyyu.com">Email</a>
+            <a href="https://codebyyu.lemonsqueezy.com" target="_blank">Lemonsqueezy Store</a>
+        </div>
+    </footer>
+
+    <script>
+        // Simple Intersection Observer to reveal elements on scroll
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
